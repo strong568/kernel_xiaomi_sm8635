@@ -76,6 +76,59 @@ jobs:
             libssl-dev libncurses-dev libelf-dev zlib1g-dev pkg-config git curl zip cpio \
             kmod python3 ccache lld llvm dwarves zstd jq wget
 
+      - name: Auto-update Upstreams (SuSFS, KSUN, SukiSU, ReSukiSU)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          TARGET_FILE=$(find . -name "pins.env" | head -n 1)
+          if [ -z "$TARGET_FILE" ] || [ ! -f "$TARGET_FILE" ]; then
+            echo "::error::Không tìm thấy file pins.env!"
+            exit 1
+          fi
+
+          echo "=========================================="
+          echo "[*] Updating pins.env ($TARGET_FILE)"
+
+          # 1. SuSFS (Lấy SHA commit mới nhất qua git ls-remote từ GitLab)
+          LATEST_SUSFS_PIN=$(git ls-remote https://gitlab.com/simonpunk/susfs4ksu.git refs/heads/gki-android14-6.1 | awk '{print $1}')
+          if [ -n "$LATEST_SUSFS_PIN" ]; then
+            echo "-> SuSFS latest commit: $LATEST_SUSFS_PIN"
+            sed -i "s|^SUSFS_PIN=.*|SUSFS_PIN=$LATEST_SUSFS_PIN|" "$TARGET_FILE"
+          fi
+
+          # 2. KernelSU-Next (Tag mới nhất)
+          KSUN_TAG=$(curl -sL -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/tags" | jq -r '.[0].name // empty')
+          if [ -n "$KSUN_TAG" ] && [ "$KSUN_TAG" != "null" ]; then
+            echo "-> KSUN latest tag: $KSUN_TAG"
+            sed -i "s|^KSUN_TAG=.*|KSUN_TAG=$KSUN_TAG|" "$TARGET_FILE"
+          fi
+
+          # 3. SukiSU-Ultra (SHA commit mới nhất nhánh main)
+          SUKISU_PIN=$(curl -sL -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/SukiSU-Ultra/SukiSU-Ultra/commits/main" | jq -r '.sha // empty')
+          if [ -n "$SUKISU_PIN" ] && [ "$SUKISU_PIN" != "null" ]; then
+            echo "-> SukiSU latest commit: $SUKISU_PIN"
+            sed -i "s|^SUKISU_PIN=.*|SUKISU_PIN=$SUKISU_PIN|" "$TARGET_FILE"
+            sed -i 's|^SUKISU_MAIN_CHERRYPICKS=.*|SUKISU_MAIN_CHERRYPICKS=""|' "$TARGET_FILE"
+          fi
+
+          # 4. ReSukiSU (SHA commit mới nhất nhánh main)
+          RESUKISU_PIN=$(curl -sL -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/repos/ReSukiSU/ReSukiSU/commits/main" | jq -r '.sha // empty')
+          if [ -n "$RESUKISU_PIN" ] && [ "$RESUKISU_PIN" != "null" ]; then
+            echo "-> ReSukiSU latest commit: $RESUKISU_PIN"
+            sed -i "s|^RESUKISU_PIN=.*|RESUKISU_PIN=$RESUKISU_PIN|" "$TARGET_FILE"
+          fi
+
+          echo "=========================================="
+          echo "[*] Current pinned versions in pins.env:"
+          grep -E "^(SUSFS_PIN|KSUN_TAG|SUKISU_PIN|RESUKISU_PIN)=" "$TARGET_FILE"
+          echo "=========================================="
+
+
       - uses: actions/cache@v4
         with:
           path: ~/.ccache
