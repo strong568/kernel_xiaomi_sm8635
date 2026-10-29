@@ -22,7 +22,7 @@ on:
         type: string
         default: "17"
       release:
-        description: "Publish a prerelease with the zips (compile-verified, untested)"
+        description: "Publish a PreRelease with the zips (compile-verified, untested)"
         type: boolean
         default: false
       apatch_superkey:
