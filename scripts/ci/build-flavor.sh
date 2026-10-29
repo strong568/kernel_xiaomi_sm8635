@@ -102,17 +102,23 @@ fetch_driver() {
       local cnt; cnt=$(git -C KernelSU rev-list --count HEAD)
       [ "$cnt" -gt 100 ] || die "KernelSU-Next clone looks shallow (rev-list count $cnt)" ;;
     sukisu)
-      git clone --quiet -b "$SUKISU_BRANCH" "$SUKISU_REPO" KernelSU
-      git -C KernelSU checkout --quiet "$SUKISU_PIN"
+      rm -rf KernelSU
+      mkdir -p KernelSU
+      git -C KernelSU init
+      git -C KernelSU remote add origin "$SUKISU_REPO"
+      # Fetch thẳng commit SHA đã ghim (không cần quan tâm tên nhánh)
+      git -C KernelSU fetch origin "$SUKISU_PIN"
+      git -C KernelSU checkout --quiet FETCH_HEAD
+
       # SukiSU derives KSU_VERSION from `git rev-list --count main`. Give it a
       # real main ref (pin + the kernel-side main commits) or it reports 13000.
       if grep -q 'REPO_BRANCH := main' KernelSU/kernel/Kbuild 2>/dev/null; then
-        git -C KernelSU fetch --quiet origin main
+        git -C KernelSU fetch origin main
         git -C KernelSU config user.email ci@theettam; git -C KernelSU config user.name ci
         for c in $SUKISU_MAIN_CHERRYPICKS; do
           [[ "$c" =~ ^[0-9a-f]{40}$ ]] || die "SUKISU_MAIN_CHERRYPICKS entry '$c' is not a full sha"
           git -C KernelSU cherry-pick -x "$c" >/dev/null 2>&1 \
-            || { git -C KernelSU cherry-pick --abort 2>/dev/null || true; die "SukiSU main commit $c did not cherry-pick onto $SUKISU_BRANCH"; }
+            || { git -C KernelSU cherry-pick --abort 2>/dev/null || true; die "SukiSU main commit $c did not cherry-pick"; }
           log "  [+] integrated SukiSU main commit ${c:0:10}"
         done
         git -C KernelSU branch -f main HEAD
@@ -120,6 +126,7 @@ fetch_driver() {
         log "  SukiSU count(main)=$cnt -> KSU_VERSION=$((40000 + cnt - 2815))"
         [ $((40000 + cnt - 2815)) -gt 30000 ] || die "SukiSU version still low; count path broken"
       fi ;;
+
     resukisu)
       git clone --quiet "$RESUKISU_REPO" KernelSU
       git -C KernelSU checkout --quiet "$RESUKISU_PIN" ;;
