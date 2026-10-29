@@ -91,12 +91,8 @@ jobs:
           echo "=========================================="
           echo "[*] Updating pins.env ($TARGET_FILE)"
 
-          # 1. SuSFS (Lấy SHA commit mới nhất qua git ls-remote từ GitLab)
-          LATEST_SUSFS_PIN=$(git ls-remote https://gitlab.com/simonpunk/susfs4ksu.git refs/heads/gki-android14-6.1 | awk '{print $1}')
-          if [ -n "$LATEST_SUSFS_PIN" ]; then
-            echo "-> SuSFS latest commit: $LATEST_SUSFS_PIN"
-            sed -i "s|^SUSFS_PIN=.*|SUSFS_PIN=$LATEST_SUSFS_PIN|" "$TARGET_FILE"
-          fi
+          # 1. SuSFS: BỎ QUA auto-update HEAD để tránh xung đột duplicate symbol sucompat với KSU/KSUN/SukiSU
+          echo "-> SuSFS: Giữ nguyên commit pin ổn định trong pins.env"
 
           # 2. KernelSU-Next (Tag mới nhất)
           KSUN_TAG=$(curl -sL -H "Authorization: Bearer $GH_TOKEN" \
