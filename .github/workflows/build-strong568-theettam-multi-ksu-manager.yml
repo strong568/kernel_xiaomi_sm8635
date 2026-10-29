@@ -128,7 +128,6 @@ jobs:
           grep -E "^(SUSFS_PIN|KSUN_TAG|SUKISU_PIN|RESUKISU_PIN)=" "$TARGET_FILE"
           echo "=========================================="
 
-
       - uses: actions/cache@v4
         with:
           path: ~/.ccache
@@ -159,6 +158,7 @@ jobs:
           APATCH_SUPERKEY: ${{ inputs.apatch_superkey }}
           KMI_STRICT: "1"
           SKIP_ZIP: ${{ matrix.flavor == 'plain' && '1' || '0' }}
+          ALLOW_DIRTY: "1"
         run: |
           set -euo pipefail
           export CLANG_DIR="$HOME/clang"
@@ -383,3 +383,4 @@ jobs:
             - **KernelSU-Next:** `KernelSU-Next/KernelSU-Next`
             - **Midori01:** `midori01/KernelSU`
           files: release_files/*
+          
