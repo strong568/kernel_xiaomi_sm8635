@@ -91,7 +91,7 @@ jobs:
           echo "=========================================="
           echo "[*] Updating pins.env ($TARGET_FILE)"
 
-          # 1. SuSFS: BỎ QUA auto-update HEAD để tránh xung đột duplicate symbol sucompat với KSU/KSUN/SukiSU
+          # 1. SuSFS: Bỏ qua auto-update HEAD để tránh duplicate symbol ksu_handle_execveat_sucompat
           echo "-> SuSFS: Giữ nguyên commit pin ổn định trong pins.env"
 
           # 2. KernelSU-Next (Tag mới nhất)
@@ -102,14 +102,8 @@ jobs:
             sed -i "s|^KSUN_TAG=.*|KSUN_TAG=$KSUN_TAG|" "$TARGET_FILE"
           fi
 
-          # 3. SukiSU-Ultra (SHA commit mới nhất nhánh main)
-          SUKISU_PIN=$(curl -sL -H "Authorization: Bearer $GH_TOKEN" \
-            "https://api.github.com/repos/SukiSU-Ultra/SukiSU-Ultra/commits/main" | jq -r '.sha // empty')
-          if [ -n "$SUKISU_PIN" ] && [ "$SUKISU_PIN" != "null" ]; then
-            echo "-> SukiSU latest commit: $SUKISU_PIN"
-            sed -i "s|^SUKISU_PIN=.*|SUKISU_PIN=$SUKISU_PIN|" "$TARGET_FILE"
-            sed -i 's|^SUKISU_MAIN_CHERRYPICKS=.*|SUKISU_MAIN_CHERRYPICKS=""|' "$TARGET_FILE"
-          fi
+          # 3. SukiSU-Ultra: Bỏ qua auto-update commit main
+          echo "-> SukiSU: Giữ nguyên commit pin ổn định trong pins.env"
 
           # 4. ReSukiSU (SHA commit mới nhất nhánh main)
           RESUKISU_PIN=$(curl -sL -H "Authorization: Bearer $GH_TOKEN" \
@@ -200,6 +194,7 @@ jobs:
             "backslashxx/KernelSU"
             "KernelSU-Next/KernelSU-Next"
             "midori01/KernelSU"
+            "LyraVoid/FinaSU"
           )
 
           COUNT=0
@@ -251,6 +246,8 @@ jobs:
                 FILE_NAME="KernelSU_Next_Manager_${VERSION_TAG}.apk"
               elif [[ "$repo" == "midori01/KernelSU" ]]; then
                 FILE_NAME="Release_midori01_${RAW_FILE_NAME}"
+              elif [[ "$repo" == "LyraVoid/FinaSU" ]]; then
+                FILE_NAME="Release_FinaSU_${RAW_FILE_NAME}"
               else
                 FILE_NAME="${OWNER}_Manager_${VERSION_TAG}.apk"
               fi
@@ -378,5 +375,5 @@ jobs:
             - **SukiSU-Ultra:** `SukiSU-Ultra/SukiSU-Ultra`
             - **KernelSU-Next:** `KernelSU-Next/KernelSU-Next`
             - **Midori01:** `midori01/KernelSU`
+            - **FinaSU:** `LyraVoid/FinaSU`
           files: release_files/*
-          
