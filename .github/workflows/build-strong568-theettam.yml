@@ -24,7 +24,7 @@ on:
       release:
         description: "Publish a PreRelease with the zips (compile-verified, untested)"
         type: boolean
-        default: false
+        default: true
       apatch_superkey:
         description: "APatch superkey (leave empty to skip the APatch flavor)"
         required: false
